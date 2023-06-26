@@ -21,4 +21,11 @@ public class TokenService {
                           )
                           .sign(Algorithm.HMAC256("jwtsecreto"));
         }
+
+        public String getSubject(String token) {
+                return JWT.require(Algorithm.HMAC256("jwtsecreto"))
+                          .withIssuer("PizzariaGPT")
+                          .build().verify(token).getSubject();
+
+        }
 }

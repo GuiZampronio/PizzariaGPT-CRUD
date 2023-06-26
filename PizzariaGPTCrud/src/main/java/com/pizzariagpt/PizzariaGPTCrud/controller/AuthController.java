@@ -7,11 +7,13 @@ import com.pizzariagpt.PizzariaGPTCrud.repository.UsuarioRepository;
 import com.pizzariagpt.PizzariaGPTCrud.service.TokenService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.client.HttpStatusCodeException;
 
 
 @RestController
@@ -43,20 +45,25 @@ public class AuthController {
 
                  var usuario = (Usuario) authenticate.getPrincipal();
 
-                 log.info("VAI GERAR O TOKEN");
+                 log.info("Gerando Token...");
                  return tokenService.gerarToken(usuario);
         }
 
         @PostMapping("/register")
         @CrossOrigin(origins = "http://localhost:4200")
-        public String register(@RequestBody RegisterDTO newUser){
+        public String register(@RequestBody RegisterDTO newUser) {
                 Usuario usuario = new Usuario();
                 usuario.setEmail(newUser.getEmail());
                 usuario.setLogin(newUser.getUsername());
                 usuario.setPassword(encoder.encode(newUser.getPassword()));
 
-                Usuario usuarioSalvo = usuarioRepository.save(usuario);
-                return tokenService.gerarToken(usuarioSalvo);
+                Boolean doesUsernameExists = usuarioRepository.checkIfUsernameExist(newUser.getUsername());
+                if(doesUsernameExists.equals(Boolean.TRUE)){
+                        throw new HttpStatusCodeException(HttpStatus.UNAUTHORIZED) {};
+                }else{
+                        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+                        return tokenService.gerarToken(usuarioSalvo);
+                }
         }
 
 
